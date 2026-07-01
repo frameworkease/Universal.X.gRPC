@@ -75,7 +75,7 @@ var BarInterceptor = func(ctx context.Context, req any, info *grpc.UnaryServerIn
 
 func TestLifecycle(t *testing.T) {
 	// 准备数据
-	Configure(50051, 50052)
+	Configure(51051, 51052)
 	serveUrl := fmt.Sprintf("127.0.0.1:%d", configuredServePort)
 	probeUrl := fmt.Sprintf("http://127.0.0.1:%d", configuredProbePort)
 	server := &GreetServer{}

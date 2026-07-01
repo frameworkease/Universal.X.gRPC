@@ -86,7 +86,7 @@ public partial class TestXServer
     public async Task Lifecycle()
     {
         #region 准备数据
-        XServer.Configure(50051, 50052);
+        XServer.Configure(51051, 51052);
         var serveUrl = $"http://127.0.0.1:{XServer.Configuration.ServePort}";
         var probeUrl = $"http://127.0.0.1:{XServer.Configuration.ProbePort}";
         var server = new GreetServer();
