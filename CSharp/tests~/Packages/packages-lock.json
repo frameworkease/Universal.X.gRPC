@@ -8,13 +8,13 @@
       "url": "https://package.openupm.com"
     },
     "com.frameworkease.universal.x.grpc": {
-      "version": "file:com.frameworkease.universal.x.grpc",
+      "version": "file:../../../",
       "depth": 0,
-      "source": "embedded",
+      "source": "local",
       "dependencies": {}
     },
     "com.frameworkease.universal.x.utility": {
-      "version": "0.0.1",
+      "version": "0.1.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
