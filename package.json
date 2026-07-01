@@ -1,48 +1,48 @@
 {
-    "name": "com.frameworkease.universal.x.grpc",
-    "displayName": "FrameworkEase Universal gRPC Extensions",
-    "description": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
-    "version": "0.1.0",
-    "unity": "2021.3",
-    "license": "MIT",
-    "author": {
-        "name": "FrameworkEase Technologies",
-        "email": "frameworkease@outlook.com",
-        "url": "https://github.com/frameworkease"
-    },
-    "homepage": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
-    "documentationUrl": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
-    "changelogUrl": "https://github.com/frameworkease/Universal.X.gRPC/releases",
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/frameworkease/Universal.X.gRPC.git"
-    },
-    "bugs": {
-        "url": "https://github.com/frameworkease/Universal.X.gRPC/issues"
-    },
-    "keywords": [
-        "frameworkease",
-        "universal",
-        "x",
-        "grpc"
-    ],
-    "files": [
-        "CSharp",
-        "CSharp.meta",
-        "LICENSE.md",
-        "LICENSE.md.meta",
-        "package.json",
-        "package.json.meta",
-        "README.md",
-        "README.md.meta"
-    ],
-    "dependencies": {},
-    "scripts": {
-        "unity-cli:open-project": "npx --yes @rage-against-the-pixel/unity-cli open-project",
-        "dotnet:build": "dotnet build",
-        "dotnet:restore-force": "rm -rf ~/.nuget/packages && dotnet restore",
-        "dotnet:pack": "mkdir -p ./Builds~ && dotnet pack -c Release -o ./Builds~",
-        "npm:pack": "mkdir -p ./Builds~ && npm pack --pack-destination ./Builds~",
-        "protoc:go_out": "npx --yes protoc --go_out=./Go/internal/Proto --go_opt=paths=import --go-grpc_out=./Go/internal/Proto --go-grpc_opt=paths=import -I ./Proto~ ./Proto~/*.proto"
-    }
+  "name": "com.frameworkease.universal.x.grpc",
+  "displayName": "FrameworkEase Universal gRPC Extensions",
+  "description": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
+  "version": "0.1.1",
+  "unity": "2021.3",
+  "license": "MIT",
+  "author": {
+    "name": "FrameworkEase Technologies",
+    "email": "frameworkease@outlook.com",
+    "url": "https://github.com/frameworkease"
+  },
+  "homepage": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
+  "documentationUrl": "https://deepwiki.com/frameworkease/Universal.X.gRPC",
+  "changelogUrl": "https://github.com/frameworkease/Universal.X.gRPC/releases",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/frameworkease/Universal.X.gRPC.git"
+  },
+  "bugs": {
+    "url": "https://github.com/frameworkease/Universal.X.gRPC/issues"
+  },
+  "keywords": [
+    "frameworkease",
+    "universal",
+    "x",
+    "grpc"
+  ],
+  "files": [
+    "CSharp",
+    "CSharp.meta",
+    "LICENSE.md",
+    "LICENSE.md.meta",
+    "package.json",
+    "package.json.meta",
+    "README.md",
+    "README.md.meta"
+  ],
+  "dependencies": {},
+  "scripts": {
+    "unity-cli:open-project": "npx --yes @rage-against-the-pixel/unity-cli open-project",
+    "dotnet:build": "dotnet build",
+    "dotnet:restore-force": "rm -rf ~/.nuget/packages && dotnet restore",
+    "dotnet:pack": "mkdir -p ./Builds~ && dotnet pack -c Release -o ./Builds~",
+    "npm:pack": "mkdir -p ./Builds~ && npm pack --pack-destination ./Builds~",
+    "protoc:go_out": "npx --yes protoc --go_out=./Go/internal/Proto --go_opt=paths=import --go-grpc_out=./Go/internal/Proto --go-grpc_opt=paths=import -I ./Proto~ ./Proto~/*.proto"
+  }
 }
