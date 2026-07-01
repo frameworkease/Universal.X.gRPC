@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0</TargetFrameworks>
+    <LangVersion>9.0</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.71.0" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
+    <PackageReference Include="FrameworkEase.Universal.X.Utility" Version="0.1.0" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PackageId>FrameworkEase.Universal.X.gRPC</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>FrameworkEase Technologies</Authors>
+    <Description>https://deepwiki.com/frameworkease/Universal.X.gRPC</Description>
+    <PackageProjectUrl>https://deepwiki.com/frameworkease/Universal.X.gRPC</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/frameworkease/Universal.X.gRPC.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>FrameworkEase Universal gRPC Extensions</PackageTags>
+    <Copyright>Copyright (c) 2026 FrameworkEase Technologies</Copyright>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../../../LICENSE.md" Pack="true" PackagePath="" />
+    <None Include="../../../../README.md" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

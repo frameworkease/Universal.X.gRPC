@@ -1,0 +1,25 @@
+# Universal: https://aka.ms/editorconfigdocs
+[*.{cs,csx,vb,vbx}]
+charset = utf-8
+indent_size = 4
+indent_style = space
+insert_final_newline = true
+
+# ReSharper: https://www.jetbrains.com/help/resharper/Using_EditorConfig.html
+resharper_unused_member_global_highlighting = none
+resharper_inconsistent_naming_highlighting = none
+resharper_check_namespace_highlighting = none
+resharper_member_hides_static_from_outer_class_highlighting = none
+resharper_redundant_default_member_initializer_highlighting = none
+resharper_empty_general_catch_clause_highlighting = none
+resharper_static_member_in_generic_type_highlighting = none
+resharper_csharp_max_line_length = 9999
+resharper_csharp_keep_existing_embedded_block_arrangement = true
+resharper_csharp_keep_user_linebreaks = true
+resharper_csharp_place_simple_embedded_block_on_same_line = true
+resharper_csharp_place_simple_method_on_single_line = true
+resharper_csharp_blank_lines_after_block_statements = 0
+resharper_csharp_blank_lines_after_control_transfer_statements = 0
+resharper_csharp_blank_lines_around_region = 0
+resharper_csharp_blank_lines_inside_region = 0
+resharper_csharp_int_align_comments = true

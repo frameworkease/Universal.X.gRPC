@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package Greet;
+option go_package = "./Greet";
+option csharp_namespace = "FrameworkEase.Universal.X.gRPC.Tests.Proto.Greet";
+
+message RequestData {
+  string Name = 1;
+}
+
+message ResponseData {
+  string Message = 1;
+}
+
+service FooService {
+  rpc SayHi(RequestData) returns (ResponseData);
+  rpc SayHiServerStreaming(RequestData) returns (stream ResponseData);
+  rpc SayHiClientStreaming(stream RequestData) returns (ResponseData);
+  rpc SayHiDuplex(stream RequestData) returns (stream ResponseData);
+}
+
+service BarService {
+  rpc SayHello(RequestData) returns (ResponseData);
+  rpc SayHelloServerStreaming(RequestData) returns (stream ResponseData);
+  rpc SayHelloClientStreaming(stream RequestData) returns (ResponseData);
+  rpc SayHelloDuplex(stream RequestData) returns (stream ResponseData);
+}
