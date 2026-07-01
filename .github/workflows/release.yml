@@ -1,0 +1,174 @@
+name: 版本发布
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: "版本名称"
+        required: false
+      confirm_repo:
+        description: "仓库名称"
+        required: true
+
+jobs:
+  prepare:
+    name: 准备发布
+    runs-on: ubuntu-latest
+    env:
+      TZ: "Asia/Shanghai"
+    outputs:
+      new_version: ${{ steps.get_version.outputs.new_version }}
+      release_title: ${{ steps.release_notes.outputs.release_title }}
+      release_content: ${{ steps.release_notes.outputs.release_content }}
+    steps:
+      - name: 验证仓库名称
+        if: ${{ ! (github.repository == github.event.inputs.confirm_repo || endsWith(github.repository, format('/{0}', github.event.inputs.confirm_repo))) }}
+        run: |
+          echo "❌ 仓库名称不匹配，输入: ${{ github.event.inputs.confirm_repo }}，期望: ${{ github.repository }}"
+          exit 1
+
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 计算版本名称
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.new_version }}" ]; then
+            VERSION="${{ github.event.inputs.new_version }}"
+          else
+            LATEST_TAG=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname | head -n1)
+            if [ -z "$LATEST_TAG" ]; then
+              LATEST_TAG="v0.1.0"
+            fi
+            LATEST_VERSION=${LATEST_TAG#v}
+            IFS='.' read -r -a VERSION_PARTS <<< "$LATEST_VERSION"
+            PATCH=$((VERSION_PARTS[2] + 1))
+            VERSION="${VERSION_PARTS[0]}.${VERSION_PARTS[1]}.$PATCH"
+          fi
+
+          if ! echo "$VERSION" | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" > /dev/null; then
+            echo "❌ 版本名称格式不正确，应为 X.Y.Z（如 1.0.0）"
+            exit 1
+          fi
+
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            echo "❌ 版本名称 v$VERSION 已存在"
+            exit 1
+          fi
+
+          echo "new_version=$VERSION" >> $GITHUB_OUTPUT
+          echo "🚀 将发布 v$VERSION"
+
+      - name: 生成发行说明
+        id: git_cliff
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: github
+          args: --unreleased --tag v${{ steps.get_version.outputs.new_version }} --strip header
+        env:
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 验证发行说明
+        id: release_notes
+        run: |
+          VERSION="${{ steps.get_version.outputs.new_version }}"
+          RELEASE_CONTENT="${{ steps.git_cliff.outputs.content }}"
+
+          if [ -z "$RELEASE_CONTENT" ]; then
+            echo "❌ 发行说明为空，请确保自上次 tag 以来的提交符合 Conventional Commits 规范"
+            exit 1
+          fi
+
+          echo "📋 发行标题: v$VERSION"
+          echo "📋 发行内容:"
+          echo "$RELEASE_CONTENT"
+
+          echo "release_title=v$VERSION" >> $GITHUB_OUTPUT
+          echo "release_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+  test:
+    name: 运行测试
+    uses: ./.github/workflows/test.yml
+    needs: prepare
+    permissions:
+      checks: write
+      contents: read
+      actions: read
+      security-events: write
+    secrets:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+  release:
+    name: 发布版本
+    needs: [prepare, test]
+    if: ${{ needs.test.result == 'success' }}
+    runs-on: ubuntu-latest
+    env:
+      TZ: "Asia/Shanghai"
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: 检出项目仓库
+        uses: actions/checkout@v6
+
+      - name: 安装依赖环境
+        uses: actions/setup-dotnet@v5
+
+      - name: 更新版本名称
+        run: |
+          VERSION="${{ needs.prepare.outputs.new_version }}"
+          echo "📦 更新 package.json 至 v$VERSION"
+          jq --arg v "$VERSION" '.version = $v' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+      - name: 编译打包版本
+        run: |
+          dotnet pack -c Release -o ./builds /p:PackageVersion=${{ needs.prepare.outputs.new_version }}
+          echo "✅ NuGet 包已打包"
+
+      - name: 登录至注册表
+        id: nuget_login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: 推送至注册表
+        run: |
+          dotnet nuget push ./builds/*.nupkg \
+            --api-key ${{ steps.nuget_login.outputs.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+          echo "✅ 已发布至 NuGet.org"
+          echo "📦 注册表: https://www.nuget.org/packages/$(basename "$(find . -maxdepth 1 -name '*.sln' | head -n 1)" .sln)"
+
+      - name: 提交版本标签
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ needs.prepare.outputs.new_version }}"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add package.json
+          git commit -m "chore: release v$VERSION"
+          git tag -a "v$VERSION" -m "chore: release v$VERSION"
+          git push origin "v$VERSION"
+          echo "✅ 已推送标签 v$VERSION"
+
+      - name: 创建发行版本
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ needs.prepare.outputs.new_version }}
+          name: ${{ needs.prepare.outputs.release_title }}
+          body: ${{ needs.prepare.outputs.release_content }}
+          draft: false
+          prerelease: false

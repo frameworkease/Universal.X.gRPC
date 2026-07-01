@@ -1,0 +1,122 @@
+name: 单元测试（Unity）
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_unity:
+        description: "编译环境"
+        required: false
+        type: string
+        default: '["2021.3.45f2", "2022.3.62f3", "6000.3.18f1"]'
+      target_mode:
+        description: "测试模式"
+        required: false
+        type: string
+        default: '["PlayMode"]'
+  workflow_call:
+    secrets:
+      UNITY_LICENSE:
+        required: true
+      UNITY_EMAIL:
+        required: true
+      UNITY_PASSWORD:
+        required: true
+    inputs:
+      target_unity:
+        required: false
+        type: string
+        default: '["2021.3.45f2", "2022.3.62f3", "6000.3.18f1"]'
+      target_mode:
+        required: false
+        type: string
+        default: '["PlayMode"]'
+
+permissions:
+  checks: write
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  test:
+    name: 测试 Unity ${{ matrix.unity }}（${{ matrix.mode }}）环境
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - CSharp/tests~
+        unity: ${{ fromJson(github.event.inputs.target_unity || inputs.target_unity) }}
+        mode: ${{ fromJson(github.event.inputs.target_mode || inputs.target_mode) }}
+    env:
+      TZ: "Asia/Shanghai"
+
+    steps:
+      - name: 检出项目仓库
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 设置测试环境
+        uses: actions/setup-dotnet@v5
+
+      - name: 安装依赖类库
+        shell: bash
+        run: |
+          dotnet tool install --global NuGetForUnity.Cli
+          nugetforunity restore ${{ matrix.project }}
+
+      - name: 准备测试镜像
+        run: |
+          # 创建 Dockerfile
+          cat > Dockerfile << 'EOF'
+          FROM unityci/editor:ubuntu-${{ matrix.unity }}-linux-il2cpp-3
+
+          # 安装 .NET SDK
+          RUN apt-get update && \
+              apt-get install -y wget ca-certificates && \
+              rm -rf /var/lib/apt/lists/* && \
+              wget https://dot.net/v1/dotnet-install.sh -O /tmp/dotnet-install.sh && \
+              chmod +x /tmp/dotnet-install.sh && \
+              /tmp/dotnet-install.sh --channel LTS --install-dir /usr/share/dotnet && \
+              ln -s /usr/share/dotnet/dotnet /usr/local/bin/dotnet && \
+              rm /tmp/dotnet-install.sh && \
+              dotnet --version
+          EOF
+
+          # 构建镜像
+          docker build -t unity-editor-ubuntu-linux-il2cpp-3:${{ matrix.unity }} .
+
+          docker images | grep unity-editor-ubuntu-linux-il2cpp-3
+
+      - name: 检出项目缓存
+        uses: actions/cache@v5
+        with:
+          path: ${{ matrix.project }}/Library
+          key: Library-${{ runner.os }}-${{ hashFiles('**/ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: |
+            Library-${{ runner.os }}-
+
+      - name: 运行单元测试
+        uses: game-ci/unity-test-runner@v4
+        env:
+          TZ: "Asia/Shanghai"
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ${{ matrix.project }}
+          unityVersion: ${{ matrix.unity }}
+          testMode: ${{ matrix.mode }}
+          artifactsPath: Tests~/Unity
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Test Results - Unity@${{ matrix.unity }}.${{ matrix.mode }}
+          customImage: unity-editor-ubuntu-linux-il2cpp-3:${{ matrix.unity }}
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: Test#${{ github.run_number }}.Unity@${{ matrix.unity }}.${{ matrix.mode }}
+          path: Tests~/Unity
+          retention-days: 14

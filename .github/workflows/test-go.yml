@@ -1,0 +1,79 @@
+name: 单元测试（Go）
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_go:
+        description: "编译环境"
+        required: false
+        type: string
+        default: '["1.24", "1.25", "1.26"]'
+      target_os:
+        description: "运行环境"
+        required: false
+        type: string
+        default: '["windows-latest", "ubuntu-latest", "macos-latest"]'
+  workflow_call:
+    inputs:
+      target_go:
+        required: false
+        type: string
+        default: '["1.24", "1.25", "1.26"]'
+      target_os:
+        required: false
+        type: string
+        default: '["windows-latest", "ubuntu-latest", "macos-latest"]'
+
+permissions:
+  checks: write
+  contents: read
+  actions: read
+  security-events: write
+
+jobs:
+  test:
+    name: 测试 Go ${{ matrix.go }}（${{ matrix.os }}）环境
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ${{ fromJson(github.event.inputs.target_go || inputs.target_go) }}
+        os: ${{ fromJson(github.event.inputs.target_os || inputs.target_os) }}
+    env:
+      TZ: "Asia/Shanghai"
+
+    steps:
+      - name: 检出项目仓库
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: 安装编译环境
+        uses: actions/setup-go@v6
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: 运行单元测试
+        shell: bash
+        run: |
+          echo "🔍 运行测试..."
+          mkdir -p Tests~/Go
+          if ! go test -p 1 -timeout 300s -v -cover -coverprofile=Tests~/Go/coverage.out ./... > Tests~/Go/output.log 2>&1; then
+            echo "❌ 测试失败"
+            cat Tests~/Go/output.log
+            exit 1
+          fi
+
+          go tool cover -html=Tests~/Go/coverage.out -o Tests~/Go/coverage.html
+          echo "📊 覆盖率报告:"
+          go tool cover -func=Tests~/Go/coverage.out
+
+          echo "✅ 测试通过"
+
+      - name: 上传测试报告
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: Test#${{ github.run_number }}.Go@${{ matrix.go }}.${{ matrix.os }}
+          path: Tests~/Go
+          retention-days: 14
